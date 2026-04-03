@@ -1,3 +1,4 @@
+import { verifySignature } from "./signature-verification";
 import { handleUrlValidation } from "./url-validation";
 
 export default {
@@ -6,9 +7,10 @@ export default {
 			return new Response("Method Not Allowed", { status: 405 });
 		}
 
+		const rawBody = await request.text();
 		let body: { event?: string; payload?: { plainToken?: string } };
 		try {
-			body = await request.json();
+			body = JSON.parse(rawBody);
 		} catch {
 			return new Response("Bad Request", { status: 400 });
 		}
@@ -20,6 +22,12 @@ export default {
 			}
 			const result = handleUrlValidation(plainToken, env.ZOOM_SECRET_TOKEN);
 			return Response.json(result, { status: 200 });
+		}
+
+		const signature = request.headers.get("x-zm-signature") ?? "";
+		const timestamp = request.headers.get("x-zm-request-timestamp") ?? "";
+		if (!verifySignature(signature, timestamp, rawBody, env.ZOOM_WEBHOOK_SECRET_TOKEN)) {
+			return new Response("Unauthorized", { status: 401 });
 		}
 
 		return new Response("Not Found", { status: 404 });
