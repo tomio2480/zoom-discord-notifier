@@ -1,4 +1,4 @@
-import type { ParticipantJoinedData, ParticipantLeftData } from "./types";
+import type { MeetingEndedData, ParticipantJoinedData, ParticipantLeftData } from "./types";
 
 type FetchFn = typeof fetch;
 
@@ -58,6 +58,15 @@ export async function sendJoinedNotification(
 	fetchFn: FetchFn = fetch,
 ): Promise<NotificationResult> {
 	return postToDiscord(webhookUrl, formatJoinedMessage(data), fetchFn);
+}
+
+export async function sendEndedNotification(
+	webhookUrl: string,
+	data: MeetingEndedData,
+	fetchFn: FetchFn = fetch,
+): Promise<NotificationResult> {
+	const message = `[${data.meetingName}] の会議が終了しました（${formatJstTime(data.endTime)}）`;
+	return postToDiscord(webhookUrl, message, fetchFn);
 }
 
 export async function sendLeftNotification(

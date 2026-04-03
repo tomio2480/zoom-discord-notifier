@@ -22,3 +22,8 @@ export interface ParticipantLeftData {
 	leaveTime: string;
 	participantCount: number;
 }
+
+export interface MeetingEndedData {
+	meetingName: string;
+	endTime: string;
+}
