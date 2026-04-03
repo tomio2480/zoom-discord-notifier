@@ -1,5 +1,10 @@
-import { sendJoinedNotification, sendLeftNotification } from "./discord-notification";
-import { decrementCount, incrementCount } from "./participant-count";
+import {
+	sendEndedNotification,
+	sendJoinedNotification,
+	sendLeftNotification,
+} from "./discord-notification";
+import { parseMeetingEnded } from "./meeting-ended";
+import { decrementCount, incrementCount, resetCount } from "./participant-count";
 import { parseParticipantJoined } from "./participant-joined";
 import { parseParticipantLeft } from "./participant-left";
 import { verifySignature } from "./signature-verification";
@@ -72,6 +77,23 @@ export default {
 				participantCount,
 			};
 			const result = await sendLeftNotification(env.DISCORD_WEBHOOK_URL, data);
+			if (!result.ok) {
+				return new Response("Bad Gateway", { status: 502 });
+			}
+			return new Response("OK", { status: 200 });
+		}
+
+		if (body.event === "meeting.ended") {
+			const parsed = parseMeetingEnded(body);
+			if (!parsed) {
+				return new Response("Bad Request", { status: 400 });
+			}
+			await resetCount(env.PARTICIPANT_STORE, env.ZOOM_MEETING_ID);
+			const data = {
+				meetingName: env.MEETING_DISPLAY_NAME || parsed.meetingName,
+				endTime: parsed.endTime,
+			};
+			const result = await sendEndedNotification(env.DISCORD_WEBHOOK_URL, data);
 			if (!result.ok) {
 				return new Response("Bad Gateway", { status: 502 });
 			}

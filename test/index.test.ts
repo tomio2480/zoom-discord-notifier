@@ -186,6 +186,40 @@ describe("Worker", () => {
 		expect(body.content).not.toContain("user0");
 	});
 
+	it("meeting.ended で終了通知を送信しカウントをリセットする", async () => {
+		// まず入室させる
+		const joinPayload = {
+			event: "meeting.participant_joined",
+			payload: {
+				object: {
+					id: 123456789,
+					topic: "テスト",
+					participant: { user_name: "user0", join_time: "2026-04-03T10:00:00Z" },
+				},
+			},
+		};
+		await worker.fetch(createSignedRequest(JSON.stringify(joinPayload)), env, ctx);
+
+		const endedPayload = {
+			event: "meeting.ended",
+			payload: {
+				object: {
+					id: 123456789,
+					topic: "テスト",
+					end_time: "2026-04-03T12:00:00Z",
+				},
+			},
+		};
+		const request = createSignedRequest(JSON.stringify(endedPayload));
+		const response = await worker.fetch(request, env, ctx);
+		expect(response.status).toBe(200);
+
+		const mockFetch = vi.mocked(fetch);
+		const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+		const body = JSON.parse(lastCall[1]?.body as string);
+		expect(body.content).toContain("会議が終了しました");
+	});
+
 	it("正しい署名の未知イベントに 404 を返す", async () => {
 		const body = JSON.stringify({
 			event: "unknown.event",

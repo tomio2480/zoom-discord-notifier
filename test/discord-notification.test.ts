@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
-import { sendJoinedNotification, sendLeftNotification } from "../src/discord-notification";
-import type { ParticipantJoinedData, ParticipantLeftData } from "../src/types";
+import {
+	sendEndedNotification,
+	sendJoinedNotification,
+	sendLeftNotification,
+} from "../src/discord-notification";
+import type { MeetingEndedData, ParticipantJoinedData, ParticipantLeftData } from "../src/types";
 
 describe("sendJoinedNotification", () => {
 	it("入室メッセージを人数付きで POST する", async () => {
@@ -90,5 +94,25 @@ describe("sendLeftNotification", () => {
 		);
 
 		expect(result.ok).toBe(false);
+	});
+});
+
+describe("sendEndedNotification", () => {
+	it("終了メッセージを POST する", async () => {
+		const mockFetch = vi.fn().mockResolvedValue(new Response("", { status: 200 }));
+		const data: MeetingEndedData = {
+			meetingName: "週次定例",
+			endTime: "2026-04-03T12:00:00Z",
+		};
+
+		const result = await sendEndedNotification(
+			"https://discord.com/api/webhooks/test/token",
+			data,
+			mockFetch,
+		);
+
+		expect(result.ok).toBe(true);
+		const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+		expect(body.content).toBe("[週次定例] の会議が終了しました（21:00）");
 	});
 });
