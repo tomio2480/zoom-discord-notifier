@@ -61,12 +61,11 @@ describe("sendLeftNotification", () => {
 		const data: ParticipantLeftData = {
 			meetingName: "週次定例",
 			leaveTime: "2026-04-03T11:00:00Z",
+			participantCount: 2,
 		};
 
 		const result = await sendLeftNotification(
 			"https://discord.com/api/webhooks/test/token",
-			"週次定例",
-			2,
 			data,
 			mockFetch,
 		);
@@ -81,12 +80,11 @@ describe("sendLeftNotification", () => {
 		const data: ParticipantLeftData = {
 			meetingName: "test",
 			leaveTime: "2026-04-03T10:00:00Z",
+			participantCount: 0,
 		};
 
 		const result = await sendLeftNotification(
 			"https://discord.com/api/webhooks/test/token",
-			"test",
-			0,
 			data,
 			mockFetch,
 		);

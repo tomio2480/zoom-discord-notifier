@@ -33,6 +33,19 @@ describe("parseParticipantLeft", () => {
 		expect(parseParticipantLeft(payload)).toBeNull();
 	});
 
+	it("leave_time が欠けている場合は null を返す", () => {
+		const payload = {
+			event: "meeting.participant_left",
+			payload: {
+				object: {
+					topic: "test",
+					participant: { user_name: "test" },
+				},
+			},
+		};
+		expect(parseParticipantLeft(payload)).toBeNull();
+	});
+
 	it("null を渡した場合は null を返す", () => {
 		expect(parseParticipantLeft(null)).toBeNull();
 	});

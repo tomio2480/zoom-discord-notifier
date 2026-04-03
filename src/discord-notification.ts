@@ -62,14 +62,12 @@ export async function sendJoinedNotification(
 
 export async function sendLeftNotification(
 	webhookUrl: string,
-	meetingName: string,
-	participantCount: number,
 	data: ParticipantLeftData,
 	fetchFn: FetchFn = fetch,
 ): Promise<NotificationResult> {
 	return postToDiscord(
 		webhookUrl,
-		formatLeftMessage(meetingName, participantCount, data.leaveTime),
+		formatLeftMessage(data.meetingName, data.participantCount, data.leaveTime),
 		fetchFn,
 	);
 }

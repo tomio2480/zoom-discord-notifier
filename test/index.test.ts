@@ -145,6 +145,7 @@ describe("Worker", () => {
 		expect(mockFetch).toHaveBeenCalledOnce();
 		const body = JSON.parse(mockFetch.mock.calls[0][1]?.body as string);
 		expect(body.content).toContain("現在 1 名参加中");
+		expect(body.content).not.toContain("田中太郎");
 	});
 
 	it("participant_left で人数付き退室通知を送信し 200 を返す", async () => {
@@ -182,6 +183,7 @@ describe("Worker", () => {
 		const body = JSON.parse(lastCall[1]?.body as string);
 		expect(body.content).toContain("退室がありました");
 		expect(body.content).toContain("現在 1 名参加中");
+		expect(body.content).not.toContain("user0");
 	});
 
 	it("正しい署名の未知イベントに 404 を返す", async () => {

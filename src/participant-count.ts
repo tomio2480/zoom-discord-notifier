@@ -1,3 +1,6 @@
+// NOTE: KV は最終整合性のため、並行リクエストでカウントが不正確になる可能性がある。
+// Durable Objects を使えば原子的な操作が可能だが、無料プランに含まれないため
+// KV を採用している。通知用途ではカウントの多少のずれは許容範囲とする。
 export async function incrementCount(kv: KVNamespace, meetingId: string): Promise<number> {
 	const current = await getCount(kv, meetingId);
 	const next = current + 1;

@@ -66,13 +66,12 @@ export default {
 				return new Response("Bad Request", { status: 400 });
 			}
 			const participantCount = await decrementCount(env.PARTICIPANT_STORE, env.ZOOM_MEETING_ID);
-			const meetingName = env.MEETING_DISPLAY_NAME || parsed.meetingName;
-			const result = await sendLeftNotification(
-				env.DISCORD_WEBHOOK_URL,
-				meetingName,
+			const data = {
+				meetingName: env.MEETING_DISPLAY_NAME || parsed.meetingName,
+				leaveTime: parsed.leaveTime,
 				participantCount,
-				parsed,
-			);
+			};
+			const result = await sendLeftNotification(env.DISCORD_WEBHOOK_URL, data);
 			if (!result.ok) {
 				return new Response("Bad Gateway", { status: 502 });
 			}
