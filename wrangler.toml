@@ -3,12 +3,9 @@ main = "src/index.ts"
 compatibility_date = "2024-12-30"
 compatibility_flags = ["nodejs_compat"]
 
-# KV namespace（wrangler kv namespace create PARTICIPANT_STORE で作成後、id を設定する）
-# namespace ID はユーザーごとに異なるため、コメントでテンプレートを提供している。
-# 以下のコメントを外して id を実際の値に置き換えること。
-# kv_namespaces = [
-#   { binding = "PARTICIPANT_STORE", id = "<your-namespace-id>" }
-# ]
+[[kv_namespaces]]
+binding = "PARTICIPANT_STORE"
+id = "0cb75d08979e41a6ae90c965a3eb237c"
 
 # シークレット変数（wrangler secret put で設定）
 # ZOOM_SECRET_TOKEN - Zoom Webhook の検証トークン
