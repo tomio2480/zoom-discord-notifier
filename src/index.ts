@@ -1,3 +1,4 @@
+import { sendDiscordNotification } from "./discord-notification";
 import { parseParticipantJoined } from "./participant-joined";
 import { verifySignature } from "./signature-verification";
 import { handleUrlValidation } from "./url-validation";
@@ -36,7 +37,11 @@ export default {
 			if (!data) {
 				return new Response("Bad Request", { status: 400 });
 			}
-			return Response.json(data, { status: 200 });
+			const result = await sendDiscordNotification(env.DISCORD_WEBHOOK_URL, data);
+			if (!result.ok) {
+				return new Response("Bad Gateway", { status: 502 });
+			}
+			return new Response("OK", { status: 200 });
 		}
 
 		return new Response("Not Found", { status: 404 });
