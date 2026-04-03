@@ -62,10 +62,8 @@ GitHub Actions で自動デプロイする場合は、リポジトリの Setting
 1. https://marketplace.zoom.us にアクセスする
 2. 「Build App」から「Webhook only」を選択する
 3. Event Subscriptions に `meeting.participant_joined` を追加する
-4. 「Event notification endpoint URL」に手順 1 で取得した Workers の URL を入力する
-5. 「Validate」ボタンを押して検証を通す
-6. 「Save」で保存する
-7. 「Secret Token」と「Verification Token」を控えておく
+4. 「Secret Token」と「Verification Token」を控えておく
+5. Webhook URL の設定と Validate は手順 4 の環境変数設定後に行う
 
 ### 3. Discord Incoming Webhook の作成
 
@@ -95,6 +93,15 @@ wrangler secret put DISCORD_WEBHOOK_URL
 ```bash
 cp .dev.vars.example .dev.vars
 ```
+
+### 5. Zoom Webhook URL の設定
+
+環境変数の設定が完了してから行う。Validate には `ZOOM_SECRET_TOKEN` が必要なため、手順 4 より前には実行できない。
+
+1. Zoom Marketplace アプリの Event Subscriptions に戻る
+2. 「Event notification endpoint URL」に手順 1 で取得した Workers の URL を入力する
+3. 「Validate」ボタンを押して検証を通す
+4. 「Save」で保存する
 
 ## 開発
 
