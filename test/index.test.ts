@@ -99,6 +99,33 @@ describe("Worker", () => {
 		expect(response.status).toBe(401);
 	});
 
+	it("meeting.participant_joined イベントで参加者データを返す", async () => {
+		const payload = {
+			event: "meeting.participant_joined",
+			payload: {
+				object: {
+					topic: "テストミーティング",
+					participant: {
+						user_name: "田中太郎",
+						join_time: "2026-04-03T10:00:00Z",
+					},
+				},
+			},
+		};
+		const request = createSignedRequest(JSON.stringify(payload));
+		const response = await worker.fetch(request, env, ctx);
+		expect(response.status).toBe(200);
+
+		const body = await response.json<{
+			meetingName: string;
+			participantName: string;
+			joinTime: string;
+		}>();
+		expect(body.meetingName).toBe("テストミーティング");
+		expect(body.participantName).toBe("田中太郎");
+		expect(body.joinTime).toBe("2026-04-03T10:00:00Z");
+	});
+
 	it("正しい署名の未知イベントに 404 を返す", async () => {
 		const body = JSON.stringify({ event: "unknown.event" });
 		const request = createSignedRequest(body);
