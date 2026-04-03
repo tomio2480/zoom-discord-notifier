@@ -6,6 +6,7 @@ const env = {
 	ZOOM_SECRET_TOKEN: "test_secret",
 	ZOOM_WEBHOOK_SECRET_TOKEN: "test_webhook_secret",
 	DISCORD_WEBHOOK_URL: "https://discord.com/api/webhooks/test",
+	ZOOM_MEETING_ID: "123456789",
 } as Env;
 
 const ctx = {
@@ -108,11 +109,34 @@ describe("Worker", () => {
 		expect(response.status).toBe(401);
 	});
 
-	it("meeting.participant_joined で Discord 通知を送信し 200 を返す", async () => {
+	it("ミーティング ID が一致しない場合は 200 を返し通知しない", async () => {
 		const payload = {
 			event: "meeting.participant_joined",
 			payload: {
 				object: {
+					id: 999999999,
+					topic: "別のミーティング",
+					participant: {
+						user_name: "テスト",
+						join_time: "2026-04-03T10:00:00Z",
+					},
+				},
+			},
+		};
+		const request = createSignedRequest(JSON.stringify(payload));
+		const response = await worker.fetch(request, env, ctx);
+		expect(response.status).toBe(200);
+
+		const mockFetch = vi.mocked(fetch);
+		expect(mockFetch).not.toHaveBeenCalled();
+	});
+
+	it("ミーティング ID が一致する場合は Discord 通知を送信し 200 を返す", async () => {
+		const payload = {
+			event: "meeting.participant_joined",
+			payload: {
+				object: {
+					id: 123456789,
 					topic: "テストミーティング",
 					participant: {
 						user_name: "田中太郎",
@@ -138,6 +162,7 @@ describe("Worker", () => {
 			event: "meeting.participant_joined",
 			payload: {
 				object: {
+					id: 123456789,
 					topic: "テスト",
 					participant: {
 						user_name: "テスト",
@@ -152,7 +177,10 @@ describe("Worker", () => {
 	});
 
 	it("正しい署名の未知イベントに 404 を返す", async () => {
-		const body = JSON.stringify({ event: "unknown.event" });
+		const body = JSON.stringify({
+			event: "unknown.event",
+			payload: { object: { id: 123456789 } },
+		});
 		const request = createSignedRequest(body);
 		const response = await worker.fetch(request, env, ctx);
 		expect(response.status).toBe(404);
