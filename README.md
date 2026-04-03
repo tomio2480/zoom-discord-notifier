@@ -32,36 +32,49 @@ Discord チャンネルに通知メッセージ表示
 
 ## セットアップ
 
-### 1. Zoom Marketplace アプリの作成
+### 1. Cloudflare アカウントの準備とデプロイ
+
+Workers の URL を先に確定させる。
+
+1. https://dash.cloudflare.com でアカウントを作成する
+2. Workers 用の API トークンを発行する
+3. アカウント ID を確認する
+4. デプロイして Workers の URL を取得する
+
+```bash
+npm ci
+npm run deploy
+```
+
+デプロイ後の URL（`https://zoom-discord-notifier.<subdomain>.workers.dev`）を控えておく。
+
+GitHub Actions で自動デプロイする場合は、リポジトリの Settings > Secrets and variables > Actions に以下を登録する。
+
+| Secret 名 | 内容 |
+|---|---|
+| `CLOUDFLARE_API_TOKEN` | Cloudflare Workers 用 API トークン |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare アカウント ID |
+
+`main` ブランチへの push 時に自動デプロイされる。
+
+### 2. Zoom Marketplace アプリの作成
 
 1. https://marketplace.zoom.us にアクセスする
 2. 「Build App」から「Webhook only」を選択する
 3. Event Subscriptions に `meeting.participant_joined` を追加する
 4. 「Secret Token」と「Verification Token」を控えておく
-5. Webhook URL は Cloudflare Workers のデプロイ後に設定する
+5. Webhook URL の設定と Validate は手順 4 の環境変数設定後に行う
 
-### 2. Discord Incoming Webhook の作成
+### 3. Discord Incoming Webhook の作成
 
 1. 通知先チャンネルの設定を開く
 2. 「連携サービス」から「ウェブフック」を選択する
 3. 「新しいウェブフック」を作成する
 4. Webhook URL を控えておく
 
-### 3. Cloudflare アカウントの準備
-
-1. https://dash.cloudflare.com でアカウントを作成する
-2. Workers 用の API トークンを発行する
-3. アカウント ID を確認する
-
 ### 4. 環境変数の設定
 
-ローカル開発では `.dev.vars.example` をコピーして `.dev.vars` を作成する。
-
-```bash
-cp .dev.vars.example .dev.vars
-```
-
-本番環境では以下のコマンドで設定する。
+手順 2, 3 で控えた値を本番環境に設定する。
 
 ```bash
 wrangler secret put ZOOM_SECRET_TOKEN
@@ -75,25 +88,20 @@ wrangler secret put DISCORD_WEBHOOK_URL
 | `ZOOM_WEBHOOK_SECRET_TOKEN` | Zoom 署名検証用シークレット |
 | `DISCORD_WEBHOOK_URL` | Discord Incoming Webhook の URL |
 
-### 5. デプロイ
-
-手動デプロイは以下のコマンドで実行する。
+ローカル開発では `.dev.vars.example` をコピーして `.dev.vars` を作成する。
 
 ```bash
-npm ci
-npm run deploy
+cp .dev.vars.example .dev.vars
 ```
 
-### 6. GitHub Actions（自動デプロイ）
+### 5. Zoom Webhook URL の設定
 
-`main` ブランチへの push 時に Cloudflare Workers へ自動デプロイされる。
+環境変数の設定が完了してから行う。Validate には `ZOOM_SECRET_TOKEN` が必要なため、手順 4 より前には実行できない。
 
-リポジトリの Settings > Secrets and variables > Actions に以下を登録する。
-
-| Secret 名 | 内容 |
-|---|---|
-| `CLOUDFLARE_API_TOKEN` | Cloudflare Workers 用 API トークン |
-| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare アカウント ID |
+1. Zoom Marketplace アプリの Event Subscriptions に戻る
+2. 「Event notification endpoint URL」に手順 1 で取得した Workers の URL を入力する
+3. 「Validate」ボタンを押して検証を通す
+4. 「Save」で保存する
 
 ## 開発
 
