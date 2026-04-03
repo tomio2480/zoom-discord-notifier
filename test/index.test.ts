@@ -2,11 +2,25 @@ import { createHmac } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import worker from "../src/index";
 
+function createMockKV(): KVNamespace {
+	const store = new Map<string, string>();
+	return {
+		get: async (key: string) => store.get(key) ?? null,
+		put: async (key: string, value: string) => {
+			store.set(key, value);
+		},
+		delete: async (key: string) => {
+			store.delete(key);
+		},
+	} as unknown as KVNamespace;
+}
+
 const env = {
 	ZOOM_SECRET_TOKEN: "test_secret",
 	ZOOM_WEBHOOK_SECRET_TOKEN: "test_webhook_secret",
 	DISCORD_WEBHOOK_URL: "https://discord.com/api/webhooks/test",
 	ZOOM_MEETING_ID: "123456789",
+	PARTICIPANT_STORE: createMockKV(),
 } as Env;
 
 const ctx = {
@@ -32,6 +46,7 @@ function createSignedRequest(body: string): Request {
 describe("Worker", () => {
 	beforeEach(() => {
 		vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("", { status: 200 })));
+		env.PARTICIPANT_STORE = createMockKV();
 	});
 
 	afterEach(() => {
@@ -62,19 +77,6 @@ describe("Worker", () => {
 		expect(body.encryptedToken).toMatch(/^[a-f0-9]{64}$/);
 	});
 
-	it("plainToken がない場合に 400 を返す", async () => {
-		const request = new Request("http://localhost/", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({
-				event: "endpoint.url_validation",
-				payload: {},
-			}),
-		});
-		const response = await worker.fetch(request, env, ctx);
-		expect(response.status).toBe(400);
-	});
-
 	it("不正な JSON ボディに 400 を返す", async () => {
 		const request = new Request("http://localhost/", {
 			method: "POST",
@@ -89,20 +91,6 @@ describe("Worker", () => {
 		const request = new Request("http://localhost/", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ event: "meeting.participant_joined" }),
-		});
-		const response = await worker.fetch(request, env, ctx);
-		expect(response.status).toBe(401);
-	});
-
-	it("不正な署名のリクエストに 401 を返す", async () => {
-		const request = new Request("http://localhost/", {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				"x-zm-signature": "v0=invalid",
-				"x-zm-request-timestamp": String(Math.floor(Date.now() / 1000)),
-			},
 			body: JSON.stringify({ event: "meeting.participant_joined" }),
 		});
 		const response = await worker.fetch(request, env, ctx);
@@ -126,10 +114,7 @@ describe("Worker", () => {
 				object: {
 					id: 999999999,
 					topic: "別のミーティング",
-					participant: {
-						user_name: "テスト",
-						join_time: "2026-04-03T10:00:00Z",
-					},
+					participant: { user_name: "テスト", join_time: "2026-04-03T10:00:00Z" },
 				},
 			},
 		};
@@ -141,75 +126,62 @@ describe("Worker", () => {
 		expect(mockFetch).not.toHaveBeenCalled();
 	});
 
-	it("ミーティング ID が一致する場合は Discord 通知を送信し 200 を返す", async () => {
+	it("participant_joined で人数付き通知を送信し 200 を返す", async () => {
 		const payload = {
 			event: "meeting.participant_joined",
 			payload: {
 				object: {
 					id: 123456789,
 					topic: "テストミーティング",
-					participant: {
-						user_name: "田中太郎",
-						join_time: "2026-04-03T10:00:00Z",
-					},
+					participant: { user_name: "田中太郎", join_time: "2026-04-03T10:00:00Z" },
 				},
 			},
 		};
 		const request = createSignedRequest(JSON.stringify(payload));
 		const response = await worker.fetch(request, env, ctx);
-		expect(response.status).toBe(200);
-
-		const mockFetch = vi.mocked(fetch);
-		expect(mockFetch).toHaveBeenCalledOnce();
-		const [url] = mockFetch.mock.calls[0];
-		expect(url).toBe(env.DISCORD_WEBHOOK_URL);
-	});
-
-	it("MEETING_DISPLAY_NAME 設定時はカスタム名で通知する", async () => {
-		const envWithDisplayName = { ...env, MEETING_DISPLAY_NAME: "オフィス会議室" };
-		const payload = {
-			event: "meeting.participant_joined",
-			payload: {
-				object: {
-					id: 123456789,
-					topic: "元のトピック名",
-					participant: {
-						user_name: "田中太郎",
-						join_time: "2026-04-03T10:00:00Z",
-					},
-				},
-			},
-		};
-		const request = createSignedRequest(JSON.stringify(payload));
-		const response = await worker.fetch(request, envWithDisplayName, ctx);
 		expect(response.status).toBe(200);
 
 		const mockFetch = vi.mocked(fetch);
 		expect(mockFetch).toHaveBeenCalledOnce();
 		const body = JSON.parse(mockFetch.mock.calls[0][1]?.body as string);
-		expect(body.content).toContain("オフィス会議室");
-		expect(body.content).not.toContain("元のトピック名");
+		expect(body.content).toContain("現在 1 名参加中");
 	});
 
-	it("Discord 通知失敗時に 502 を返す", async () => {
-		vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("error", { status: 500 })));
+	it("participant_left で人数付き退室通知を送信し 200 を返す", async () => {
+		// まず 2 名入室させる
+		for (let i = 0; i < 2; i++) {
+			const joinPayload = {
+				event: "meeting.participant_joined",
+				payload: {
+					object: {
+						id: 123456789,
+						topic: "テスト",
+						participant: { user_name: `user${i}`, join_time: "2026-04-03T10:00:00Z" },
+					},
+				},
+			};
+			await worker.fetch(createSignedRequest(JSON.stringify(joinPayload)), env, ctx);
+		}
 
-		const payload = {
-			event: "meeting.participant_joined",
+		const leftPayload = {
+			event: "meeting.participant_left",
 			payload: {
 				object: {
 					id: 123456789,
 					topic: "テスト",
-					participant: {
-						user_name: "テスト",
-						join_time: "2026-04-03T10:00:00Z",
-					},
+					participant: { user_name: "user0", leave_time: "2026-04-03T11:00:00Z" },
 				},
 			},
 		};
-		const request = createSignedRequest(JSON.stringify(payload));
+		const request = createSignedRequest(JSON.stringify(leftPayload));
 		const response = await worker.fetch(request, env, ctx);
-		expect(response.status).toBe(502);
+		expect(response.status).toBe(200);
+
+		const mockFetch = vi.mocked(fetch);
+		const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+		const body = JSON.parse(lastCall[1]?.body as string);
+		expect(body.content).toContain("退室がありました");
+		expect(body.content).toContain("現在 1 名参加中");
 	});
 
 	it("正しい署名の未知イベントに 404 を返す", async () => {

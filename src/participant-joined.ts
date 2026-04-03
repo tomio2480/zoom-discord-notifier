@@ -1,6 +1,9 @@
-import type { ParticipantJoinedData } from "./types";
+export interface ParsedJoinEvent {
+	meetingName: string;
+	joinTime: string;
+}
 
-export function parseParticipantJoined(payload: unknown): ParticipantJoinedData | null {
+export function parseParticipantJoined(payload: unknown): ParsedJoinEvent | null {
 	if (typeof payload !== "object" || payload === null) return null;
 
 	const p = payload as {
@@ -8,7 +11,7 @@ export function parseParticipantJoined(payload: unknown): ParticipantJoinedData 
 		payload?: {
 			object?: {
 				topic?: unknown;
-				participant?: { user_name?: unknown; join_time?: unknown };
+				participant?: { join_time?: unknown };
 			};
 		};
 	};
@@ -16,16 +19,11 @@ export function parseParticipantJoined(payload: unknown): ParticipantJoinedData 
 	if (p.event !== "meeting.participant_joined") return null;
 
 	const meetingName = p.payload?.object?.topic;
-	const participantName = p.payload?.object?.participant?.user_name;
 	const joinTime = p.payload?.object?.participant?.join_time;
 
-	if (
-		typeof meetingName !== "string" ||
-		typeof participantName !== "string" ||
-		typeof joinTime !== "string"
-	) {
+	if (typeof meetingName !== "string" || typeof joinTime !== "string") {
 		return null;
 	}
 
-	return { meetingName, participantName, joinTime };
+	return { meetingName, joinTime };
 }

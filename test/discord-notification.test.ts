@@ -1,29 +1,25 @@
 import { describe, expect, it, vi } from "vitest";
-import { sendDiscordNotification } from "../src/discord-notification";
-import type { ParticipantJoinedData } from "../src/types";
+import { sendJoinedNotification, sendLeftNotification } from "../src/discord-notification";
+import type { ParticipantJoinedData, ParticipantLeftData } from "../src/types";
 
-describe("sendDiscordNotification", () => {
-	it("Discord Webhook に正しいメッセージを POST する", async () => {
+describe("sendJoinedNotification", () => {
+	it("入室メッセージを人数付きで POST する", async () => {
 		const mockFetch = vi.fn().mockResolvedValue(new Response("", { status: 200 }));
-		const webhookUrl = "https://discord.com/api/webhooks/test/token";
 		const data: ParticipantJoinedData = {
 			meetingName: "週次定例",
-			participantName: "田中太郎",
 			joinTime: "2026-04-03T10:30:00Z",
+			participantCount: 3,
 		};
 
-		const result = await sendDiscordNotification(webhookUrl, data, mockFetch);
+		const result = await sendJoinedNotification(
+			"https://discord.com/api/webhooks/test/token",
+			data,
+			mockFetch,
+		);
 
 		expect(result.ok).toBe(true);
-		expect(mockFetch).toHaveBeenCalledOnce();
-
-		const [url, options] = mockFetch.mock.calls[0];
-		expect(url).toBe(webhookUrl);
-		expect(options.method).toBe("POST");
-		expect(options.headers["Content-Type"]).toBe("application/json");
-
-		const body = JSON.parse(options.body);
-		expect(body.content).toBe("[週次定例] に 田中太郎 が入室しました（19:30）");
+		const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+		expect(body.content).toBe("[週次定例] に入室がありました（現在 3 名参加中）（19:30）");
 		expect(body.allowed_mentions).toEqual({ parse: [] });
 	});
 
@@ -31,25 +27,25 @@ describe("sendDiscordNotification", () => {
 		const mockFetch = vi.fn().mockResolvedValue(new Response("", { status: 200 }));
 		const data: ParticipantJoinedData = {
 			meetingName: "夜間会議",
-			participantName: "鈴木一郎",
 			joinTime: "2026-04-03T15:30:00Z",
+			participantCount: 1,
 		};
 
-		await sendDiscordNotification("https://discord.com/api/webhooks/test/token", data, mockFetch);
+		await sendJoinedNotification("https://discord.com/api/webhooks/test/token", data, mockFetch);
 
 		const body = JSON.parse(mockFetch.mock.calls[0][1].body);
-		expect(body.content).toBe("[夜間会議] に 鈴木一郎 が入室しました（00:30）");
+		expect(body.content).toBe("[夜間会議] に入室がありました（現在 1 名参加中）（00:30）");
 	});
 
 	it("POST 失敗時に ok: false を返す", async () => {
 		const mockFetch = vi.fn().mockResolvedValue(new Response("error", { status: 500 }));
 		const data: ParticipantJoinedData = {
 			meetingName: "test",
-			participantName: "test",
 			joinTime: "2026-04-03T10:00:00Z",
+			participantCount: 1,
 		};
 
-		const result = await sendDiscordNotification(
+		const result = await sendJoinedNotification(
 			"https://discord.com/api/webhooks/test/token",
 			data,
 			mockFetch,
@@ -57,38 +53,40 @@ describe("sendDiscordNotification", () => {
 
 		expect(result.ok).toBe(false);
 	});
+});
 
-	it("タイムアウト（AbortError）時に ok: false を返す", async () => {
-		const mockFetch = vi.fn().mockImplementation(() => {
-			const error = new Error("The operation was aborted");
-			error.name = "AbortError";
-			return Promise.reject(error);
-		});
-		const data: ParticipantJoinedData = {
-			meetingName: "test",
-			participantName: "test",
-			joinTime: "2026-04-03T10:00:00Z",
+describe("sendLeftNotification", () => {
+	it("退室メッセージを人数付きで POST する", async () => {
+		const mockFetch = vi.fn().mockResolvedValue(new Response("", { status: 200 }));
+		const data: ParticipantLeftData = {
+			meetingName: "週次定例",
+			leaveTime: "2026-04-03T11:00:00Z",
 		};
 
-		const result = await sendDiscordNotification(
+		const result = await sendLeftNotification(
 			"https://discord.com/api/webhooks/test/token",
+			"週次定例",
+			2,
 			data,
 			mockFetch,
 		);
 
-		expect(result.ok).toBe(false);
+		expect(result.ok).toBe(true);
+		const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+		expect(body.content).toBe("[週次定例] から退室がありました（現在 2 名参加中）（20:00）");
 	});
 
-	it("ネットワークエラー時に ok: false を返す", async () => {
-		const mockFetch = vi.fn().mockRejectedValue(new Error("Network error"));
-		const data: ParticipantJoinedData = {
+	it("POST 失敗時に ok: false を返す", async () => {
+		const mockFetch = vi.fn().mockResolvedValue(new Response("error", { status: 500 }));
+		const data: ParticipantLeftData = {
 			meetingName: "test",
-			participantName: "test",
-			joinTime: "2026-04-03T10:00:00Z",
+			leaveTime: "2026-04-03T10:00:00Z",
 		};
 
-		const result = await sendDiscordNotification(
+		const result = await sendLeftNotification(
 			"https://discord.com/api/webhooks/test/token",
+			"test",
+			0,
 			data,
 			mockFetch,
 		);

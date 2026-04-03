@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { parseParticipantJoined } from "../src/participant-joined";
 
 describe("parseParticipantJoined", () => {
-	it("ペイロードから参加者名・ミーティング名・入室時刻を取り出す", () => {
+	it("ペイロードからミーティング名と入室時刻を取り出す", () => {
 		const payload = {
 			event: "meeting.participant_joined",
 			payload: {
@@ -19,7 +19,6 @@ describe("parseParticipantJoined", () => {
 		const result = parseParticipantJoined(payload);
 		expect(result).toEqual({
 			meetingName: "週次定例ミーティング",
-			participantName: "田中太郎",
 			joinTime: "2026-04-03T10:00:00Z",
 		});
 	});
@@ -34,16 +33,11 @@ describe("parseParticipantJoined", () => {
 				},
 			},
 		};
-
 		expect(parseParticipantJoined(payload)).toBeNull();
 	});
 
 	it("payload.object が欠けている場合は null を返す", () => {
-		const payload = {
-			event: "meeting.participant_joined",
-			payload: {},
-		};
-
+		const payload = { event: "meeting.participant_joined", payload: {} };
 		expect(parseParticipantJoined(payload)).toBeNull();
 	});
 
@@ -52,7 +46,6 @@ describe("parseParticipantJoined", () => {
 			event: "meeting.participant_joined",
 			payload: { object: { topic: "test" } },
 		};
-
 		expect(parseParticipantJoined(payload)).toBeNull();
 	});
 
