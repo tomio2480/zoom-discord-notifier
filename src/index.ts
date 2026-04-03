@@ -33,6 +33,9 @@ export default {
 		}
 
 		const meetingId = (body as { payload?: { object?: { id?: unknown } } }).payload?.object?.id;
+		if (meetingId === undefined || meetingId === null) {
+			return new Response("Bad Request", { status: 400 });
+		}
 		if (String(meetingId) !== env.ZOOM_MEETING_ID) {
 			return new Response("OK", { status: 200 });
 		}

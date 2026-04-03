@@ -109,6 +109,16 @@ describe("Worker", () => {
 		expect(response.status).toBe(401);
 	});
 
+	it("ミーティング ID が欠落している場合は 400 を返す", async () => {
+		const payload = {
+			event: "meeting.participant_joined",
+			payload: { object: { topic: "テスト" } },
+		};
+		const request = createSignedRequest(JSON.stringify(payload));
+		const response = await worker.fetch(request, env, ctx);
+		expect(response.status).toBe(400);
+	});
+
 	it("ミーティング ID が一致しない場合は 200 を返し通知しない", async () => {
 		const payload = {
 			event: "meeting.participant_joined",
