@@ -9,8 +9,7 @@ describe("handleUrlValidation", () => {
 		const result = handleUrlValidation(plainToken, SECRET_TOKEN);
 
 		expect(result.plainToken).toBe(plainToken);
-		expect(result.encryptedToken).toBeTypeOf("string");
-		expect(result.encryptedToken.length).toBeGreaterThan(0);
+		expect(result.encryptedToken).toMatch(/^[a-f0-9]{64}$/);
 	});
 
 	it("正しい HMAC-SHA256 値を生成する", () => {
