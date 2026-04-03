@@ -13,6 +13,12 @@ export interface ZoomWebhookPayload {
 
 export interface ParticipantJoinedData {
 	meetingName: string;
-	participantName: string;
 	joinTime: string;
+	participantCount: number;
+}
+
+export interface ParticipantLeftData {
+	meetingName: string;
+	leaveTime: string;
+	participantCount: number;
 }

@@ -1,5 +1,7 @@
-import { sendDiscordNotification } from "./discord-notification";
+import { sendJoinedNotification, sendLeftNotification } from "./discord-notification";
+import { decrementCount, incrementCount } from "./participant-count";
 import { parseParticipantJoined } from "./participant-joined";
+import { parseParticipantLeft } from "./participant-left";
 import { verifySignature } from "./signature-verification";
 import { handleUrlValidation } from "./url-validation";
 
@@ -41,14 +43,35 @@ export default {
 		}
 
 		if (body.event === "meeting.participant_joined") {
-			const data = parseParticipantJoined(body);
-			if (!data) {
+			const parsed = parseParticipantJoined(body);
+			if (!parsed) {
 				return new Response("Bad Request", { status: 400 });
 			}
-			if (env.MEETING_DISPLAY_NAME) {
-				data.meetingName = env.MEETING_DISPLAY_NAME;
+			const participantCount = await incrementCount(env.PARTICIPANT_STORE, env.ZOOM_MEETING_ID);
+			const data = {
+				meetingName: env.MEETING_DISPLAY_NAME || parsed.meetingName,
+				joinTime: parsed.joinTime,
+				participantCount,
+			};
+			const result = await sendJoinedNotification(env.DISCORD_WEBHOOK_URL, data);
+			if (!result.ok) {
+				return new Response("Bad Gateway", { status: 502 });
 			}
-			const result = await sendDiscordNotification(env.DISCORD_WEBHOOK_URL, data);
+			return new Response("OK", { status: 200 });
+		}
+
+		if (body.event === "meeting.participant_left") {
+			const parsed = parseParticipantLeft(body);
+			if (!parsed) {
+				return new Response("Bad Request", { status: 400 });
+			}
+			const participantCount = await decrementCount(env.PARTICIPANT_STORE, env.ZOOM_MEETING_ID);
+			const data = {
+				meetingName: env.MEETING_DISPLAY_NAME || parsed.meetingName,
+				leaveTime: parsed.leaveTime,
+				participantCount,
+			};
+			const result = await sendLeftNotification(env.DISCORD_WEBHOOK_URL, data);
 			if (!result.ok) {
 				return new Response("Bad Gateway", { status: 502 });
 			}

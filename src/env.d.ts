@@ -4,4 +4,5 @@ interface Env {
 	DISCORD_WEBHOOK_URL: string;
 	ZOOM_MEETING_ID: string;
 	MEETING_DISPLAY_NAME?: string;
+	PARTICIPANT_STORE: KVNamespace;
 }
