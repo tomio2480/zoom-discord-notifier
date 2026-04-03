@@ -1,5 +1,5 @@
 import { createHmac } from "node:crypto";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import worker from "../src/index";
 
 const env = {
@@ -29,6 +29,15 @@ function createSignedRequest(body: string): Request {
 }
 
 describe("Worker", () => {
+	beforeEach(() => {
+		vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("", { status: 200 })));
+	});
+
+	afterEach(() => {
+		vi.unstubAllGlobals();
+		vi.restoreAllMocks();
+	});
+
 	it("GET リクエストに 405 を返す", async () => {
 		const request = new Request("http://localhost/", { method: "GET" });
 		const response = await worker.fetch(request, env, ctx);
@@ -99,7 +108,7 @@ describe("Worker", () => {
 		expect(response.status).toBe(401);
 	});
 
-	it("meeting.participant_joined イベントで参加者データを返す", async () => {
+	it("meeting.participant_joined で Discord 通知を送信し 200 を返す", async () => {
 		const payload = {
 			event: "meeting.participant_joined",
 			payload: {
@@ -116,14 +125,30 @@ describe("Worker", () => {
 		const response = await worker.fetch(request, env, ctx);
 		expect(response.status).toBe(200);
 
-		const body = await response.json<{
-			meetingName: string;
-			participantName: string;
-			joinTime: string;
-		}>();
-		expect(body.meetingName).toBe("テストミーティング");
-		expect(body.participantName).toBe("田中太郎");
-		expect(body.joinTime).toBe("2026-04-03T10:00:00Z");
+		const mockFetch = vi.mocked(fetch);
+		expect(mockFetch).toHaveBeenCalledOnce();
+		const [url] = mockFetch.mock.calls[0];
+		expect(url).toBe(env.DISCORD_WEBHOOK_URL);
+	});
+
+	it("Discord 通知失敗時に 502 を返す", async () => {
+		vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("error", { status: 500 })));
+
+		const payload = {
+			event: "meeting.participant_joined",
+			payload: {
+				object: {
+					topic: "テスト",
+					participant: {
+						user_name: "テスト",
+						join_time: "2026-04-03T10:00:00Z",
+					},
+				},
+			},
+		};
+		const request = createSignedRequest(JSON.stringify(payload));
+		const response = await worker.fetch(request, env, ctx);
+		expect(response.status).toBe(502);
 	});
 
 	it("正しい署名の未知イベントに 404 を返す", async () => {
