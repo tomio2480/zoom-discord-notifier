@@ -115,4 +115,20 @@ describe("sendEndedNotification", () => {
 		const body = JSON.parse(mockFetch.mock.calls[0][1].body);
 		expect(body.content).toBe("[週次定例] の会議が終了しました（21:00）");
 	});
+
+	it("POST 失敗時に ok: false を返す", async () => {
+		const mockFetch = vi.fn().mockResolvedValue(new Response("error", { status: 500 }));
+		const data: MeetingEndedData = {
+			meetingName: "test",
+			endTime: "2026-04-03T12:00:00Z",
+		};
+
+		const result = await sendEndedNotification(
+			"https://discord.com/api/webhooks/test/token",
+			data,
+			mockFetch,
+		);
+
+		expect(result.ok).toBe(false);
+	});
 });

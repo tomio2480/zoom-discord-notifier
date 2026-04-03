@@ -21,6 +21,9 @@ export function parseMeetingEnded(payload: unknown): MeetingEndedData | null {
 	if (typeof meetingName !== "string" || typeof endTime !== "string") {
 		return null;
 	}
+	if (Number.isNaN(Date.parse(endTime))) {
+		return null;
+	}
 
 	return { meetingName, endTime };
 }

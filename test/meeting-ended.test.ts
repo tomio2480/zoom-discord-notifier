@@ -30,6 +30,19 @@ describe("parseMeetingEnded", () => {
 		expect(parseMeetingEnded(payload)).toBeNull();
 	});
 
+	it("end_time が不正な日時フォーマットの場合は null を返す", () => {
+		const payload = {
+			event: "meeting.ended",
+			payload: {
+				object: {
+					topic: "テスト",
+					end_time: "invalid-date",
+				},
+			},
+		};
+		expect(parseMeetingEnded(payload)).toBeNull();
+	});
+
 	it("null を渡した場合は null を返す", () => {
 		expect(parseMeetingEnded(null)).toBeNull();
 	});

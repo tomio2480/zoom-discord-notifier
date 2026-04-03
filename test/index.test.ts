@@ -214,10 +214,19 @@ describe("Worker", () => {
 		const response = await worker.fetch(request, env, ctx);
 		expect(response.status).toBe(200);
 
+		// KV のカウントがリセットされていることを検証
+		expect(await env.PARTICIPANT_STORE.get("count:123456789")).toBeNull();
+
 		const mockFetch = vi.mocked(fetch);
 		const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
 		const body = JSON.parse(lastCall[1]?.body as string);
 		expect(body.content).toContain("会議が終了しました");
+
+		// 終了後の再入室で 1 名から始まることを検証
+		await worker.fetch(createSignedRequest(JSON.stringify(joinPayload)), env, ctx);
+		const rejoinCall = vi.mocked(fetch).mock.calls[vi.mocked(fetch).mock.calls.length - 1];
+		const rejoinBody = JSON.parse(rejoinCall[1]?.body as string);
+		expect(rejoinBody.content).toContain("現在 1 名参加中");
 	});
 
 	it("正しい署名の未知イベントに 404 を返す", async () => {
