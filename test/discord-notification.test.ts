@@ -58,6 +58,27 @@ describe("sendDiscordNotification", () => {
 		expect(result.ok).toBe(false);
 	});
 
+	it("タイムアウト（AbortError）時に ok: false を返す", async () => {
+		const mockFetch = vi.fn().mockImplementation(() => {
+			const error = new Error("The operation was aborted");
+			error.name = "AbortError";
+			return Promise.reject(error);
+		});
+		const data: ParticipantJoinedData = {
+			meetingName: "test",
+			participantName: "test",
+			joinTime: "2026-04-03T10:00:00Z",
+		};
+
+		const result = await sendDiscordNotification(
+			"https://discord.com/api/webhooks/test/token",
+			data,
+			mockFetch,
+		);
+
+		expect(result.ok).toBe(false);
+	});
+
 	it("ネットワークエラー時に ok: false を返す", async () => {
 		const mockFetch = vi.fn().mockRejectedValue(new Error("Network error"));
 		const data: ParticipantJoinedData = {
