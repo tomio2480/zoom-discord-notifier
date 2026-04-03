@@ -1,4 +1,6 @@
+import { parseParticipantJoined } from "./participant-joined";
 import { verifySignature } from "./signature-verification";
+import type { ZoomWebhookPayload } from "./types";
 import { handleUrlValidation } from "./url-validation";
 
 export default {
@@ -28,6 +30,14 @@ export default {
 		const timestamp = request.headers.get("x-zm-request-timestamp") ?? "";
 		if (!verifySignature(signature, timestamp, rawBody, env.ZOOM_WEBHOOK_SECRET_TOKEN)) {
 			return new Response("Unauthorized", { status: 401 });
+		}
+
+		if (body.event === "meeting.participant_joined") {
+			const data = parseParticipantJoined(body as ZoomWebhookPayload);
+			if (!data) {
+				return new Response("Bad Request", { status: 400 });
+			}
+			return Response.json(data, { status: 200 });
 		}
 
 		return new Response("Not Found", { status: 404 });
