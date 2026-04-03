@@ -100,6 +100,23 @@ export default {
 			return new Response("OK", { status: 200 });
 		}
 
+		if (body.event === "meeting.ended") {
+			const parsed = parseMeetingEnded(body);
+			if (!parsed) {
+				return new Response("Bad Request", { status: 400 });
+			}
+			await resetCount(env.PARTICIPANT_STORE, env.ZOOM_MEETING_ID);
+			const data = {
+				meetingName: env.MEETING_DISPLAY_NAME || parsed.meetingName,
+				endTime: parsed.endTime,
+			};
+			const result = await sendEndedNotification(env.DISCORD_WEBHOOK_URL, data);
+			if (!result.ok) {
+				return new Response("Bad Gateway", { status: 502 });
+			}
+			return new Response("OK", { status: 200 });
+		}
+
 		return new Response("Not Found", { status: 404 });
 	},
 } satisfies ExportedHandler<Env>;

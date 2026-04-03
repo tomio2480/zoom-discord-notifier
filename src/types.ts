@@ -27,3 +27,8 @@ export interface MeetingEndedData {
 	meetingName: string;
 	endTime: string;
 }
+
+export interface MeetingEndedData {
+	meetingName: string;
+	endTime: string;
+}
