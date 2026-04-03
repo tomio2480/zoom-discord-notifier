@@ -24,6 +24,21 @@ describe("sendDiscordNotification", () => {
 
 		const body = JSON.parse(options.body);
 		expect(body.content).toBe("[週次定例] に 田中太郎 が入室しました（19:30）");
+		expect(body.allowed_mentions).toEqual({ parse: [] });
+	});
+
+	it("UTC 15:00 以降の時刻を JST で正しく日跨ぎ変換する", async () => {
+		const mockFetch = vi.fn().mockResolvedValue(new Response("", { status: 200 }));
+		const data: ParticipantJoinedData = {
+			meetingName: "夜間会議",
+			participantName: "鈴木一郎",
+			joinTime: "2026-04-03T15:30:00Z",
+		};
+
+		await sendDiscordNotification("https://discord.com/api/webhooks/test/token", data, mockFetch);
+
+		const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+		expect(body.content).toBe("[夜間会議] に 鈴木一郎 が入室しました（00:30）");
 	});
 
 	it("POST 失敗時に ok: false を返す", async () => {

@@ -34,6 +34,7 @@ describe("Worker", () => {
 	});
 
 	afterEach(() => {
+		vi.unstubAllGlobals();
 		vi.restoreAllMocks();
 	});
 
