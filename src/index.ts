@@ -6,14 +6,19 @@ export default {
 			return new Response("Method Not Allowed", { status: 405 });
 		}
 
-		const body = await request.json<{ event?: string; payload?: { plainToken?: string } }>();
+		let body: { event?: string; payload?: { plainToken?: string } };
+		try {
+			body = await request.json();
+		} catch {
+			return new Response("Bad Request", { status: 400 });
+		}
 
 		if (body.event === "endpoint.url_validation") {
 			const plainToken = body.payload?.plainToken;
 			if (!plainToken) {
 				return new Response("Bad Request", { status: 400 });
 			}
-			const result = await handleUrlValidation(plainToken, env.ZOOM_SECRET_TOKEN);
+			const result = handleUrlValidation(plainToken, env.ZOOM_SECRET_TOKEN);
 			return Response.json(result, { status: 200 });
 		}
 

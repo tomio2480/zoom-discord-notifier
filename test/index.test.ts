@@ -50,6 +50,16 @@ describe("Worker", () => {
 		expect(response.status).toBe(400);
 	});
 
+	it("不正な JSON ボディに 400 を返す", async () => {
+		const request = new Request("http://localhost/", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: "invalid json",
+		});
+		const response = await worker.fetch(request, env, ctx);
+		expect(response.status).toBe(400);
+	});
+
 	it("未知のイベントに 404 を返す", async () => {
 		const request = new Request("http://localhost/", {
 			method: "POST",

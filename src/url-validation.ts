@@ -5,10 +5,7 @@ export interface UrlValidationResult {
 	encryptedToken: string;
 }
 
-export async function handleUrlValidation(
-	plainToken: string,
-	secretToken: string,
-): Promise<UrlValidationResult> {
+export function handleUrlValidation(plainToken: string, secretToken: string): UrlValidationResult {
 	const encryptedToken = createHmac("sha256", secretToken).update(plainToken).digest("hex");
 	return { plainToken, encryptedToken };
 }
