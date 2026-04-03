@@ -45,6 +45,9 @@ export default {
 			if (!data) {
 				return new Response("Bad Request", { status: 400 });
 			}
+			if (env.MEETING_DISPLAY_NAME) {
+				data.meetingName = env.MEETING_DISPLAY_NAME;
+			}
 			const result = await sendDiscordNotification(env.DISCORD_WEBHOOK_URL, data);
 			if (!result.ok) {
 				return new Response("Bad Gateway", { status: 502 });

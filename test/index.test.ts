@@ -165,6 +165,32 @@ describe("Worker", () => {
 		expect(url).toBe(env.DISCORD_WEBHOOK_URL);
 	});
 
+	it("MEETING_DISPLAY_NAME 設定時はカスタム名で通知する", async () => {
+		const envWithDisplayName = { ...env, MEETING_DISPLAY_NAME: "オフィス会議室" };
+		const payload = {
+			event: "meeting.participant_joined",
+			payload: {
+				object: {
+					id: 123456789,
+					topic: "元のトピック名",
+					participant: {
+						user_name: "田中太郎",
+						join_time: "2026-04-03T10:00:00Z",
+					},
+				},
+			},
+		};
+		const request = createSignedRequest(JSON.stringify(payload));
+		const response = await worker.fetch(request, envWithDisplayName, ctx);
+		expect(response.status).toBe(200);
+
+		const mockFetch = vi.mocked(fetch);
+		expect(mockFetch).toHaveBeenCalledOnce();
+		const body = JSON.parse(mockFetch.mock.calls[0][1]?.body as string);
+		expect(body.content).toContain("オフィス会議室");
+		expect(body.content).not.toContain("元のトピック名");
+	});
+
 	it("Discord 通知失敗時に 502 を返す", async () => {
 		vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("error", { status: 500 })));
 

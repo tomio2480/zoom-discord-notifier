@@ -2,3 +2,4 @@ ZOOM_SECRET_TOKEN=your_zoom_secret_token
 ZOOM_WEBHOOK_SECRET_TOKEN=your_zoom_webhook_secret_token
 DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/xxx/yyy
 ZOOM_MEETING_ID=your_zoom_meeting_id
+MEETING_DISPLAY_NAME=your_meeting_room_name
