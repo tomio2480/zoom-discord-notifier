@@ -34,6 +34,14 @@ describe("verifySignature", () => {
 		expect(verifySignature(signature, oldTimestamp, body, SECRET)).toBe(false);
 	});
 
+	it("5分以上先の未来タイムスタンプで false を返す", () => {
+		const futureTimestamp = String(Math.floor(Date.now() / 1000) + 301);
+		const body = '{"event":"meeting.participant_joined"}';
+		const signature = generateSignature(futureTimestamp, body, SECRET);
+
+		expect(verifySignature(signature, futureTimestamp, body, SECRET)).toBe(false);
+	});
+
 	it("ちょうど5分以内のタイムスタンプで true を返す", () => {
 		const timestamp = String(Math.floor(Date.now() / 1000) - 299);
 		const body = '{"event":"meeting.participant_joined"}';

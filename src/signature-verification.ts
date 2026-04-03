@@ -10,7 +10,7 @@ export function verifySignature(
 ): boolean {
 	const now = Math.floor(Date.now() / 1000);
 	const requestTime = Number.parseInt(timestamp, 10);
-	if (Number.isNaN(requestTime) || now - requestTime > TIMESTAMP_TOLERANCE_SECONDS) {
+	if (Number.isNaN(requestTime) || Math.abs(now - requestTime) > TIMESTAMP_TOLERANCE_SECONDS) {
 		return false;
 	}
 
