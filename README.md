@@ -11,7 +11,7 @@ Zoom ミーティングへの入室を Discord に通知する Cloudflare Worker
 
 ## システム構成
 
-```
+```text
 Zoom ミーティング（参加者入室）
     ↓ meeting.participant_joined イベント
 Zoom Webhook（Zoom Marketplace アプリ）
