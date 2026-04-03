@@ -2,3 +2,8 @@ name = "zoom-discord-notifier"
 main = "src/index.ts"
 compatibility_date = "2024-12-30"
 compatibility_flags = ["nodejs_compat"]
+
+# シークレット変数（wrangler secret put で設定）
+# ZOOM_SECRET_TOKEN - Zoom Webhook の検証トークン
+# ZOOM_WEBHOOK_SECRET_TOKEN - Zoom 署名検証用シークレット
+# DISCORD_WEBHOOK_URL - Discord Incoming Webhook の URL
