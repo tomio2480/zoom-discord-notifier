@@ -22,7 +22,7 @@ wrangler secret put DISCORD_WEBHOOK_URL
 
 ### GitHub Actions（自動デプロイ）
 
-`main` ブランチへのマージ時に Cloudflare Workers へ自動デプロイされる。
+`main` ブランチへの push 時に Cloudflare Workers へ自動デプロイされる。
 
 リポジトリの Settings > Secrets and variables > Actions に以下を登録する。
 
