@@ -32,6 +32,14 @@ export default {
 			return new Response("Unauthorized", { status: 401 });
 		}
 
+		const meetingId = (body as { payload?: { object?: { id?: unknown } } }).payload?.object?.id;
+		if (meetingId === undefined || meetingId === null) {
+			return new Response("Bad Request", { status: 400 });
+		}
+		if (String(meetingId) !== env.ZOOM_MEETING_ID) {
+			return new Response("OK", { status: 200 });
+		}
+
 		if (body.event === "meeting.participant_joined") {
 			const data = parseParticipantJoined(body);
 			if (!data) {

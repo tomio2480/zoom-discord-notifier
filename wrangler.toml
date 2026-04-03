@@ -7,3 +7,4 @@ compatibility_flags = ["nodejs_compat"]
 # ZOOM_SECRET_TOKEN - Zoom Webhook の検証トークン
 # ZOOM_WEBHOOK_SECRET_TOKEN - Zoom 署名検証用シークレット
 # DISCORD_WEBHOOK_URL - Discord Incoming Webhook の URL
+# ZOOM_MEETING_ID - 通知対象のミーティング ID
