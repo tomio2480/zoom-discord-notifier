@@ -1,0 +1,32 @@
+{
+	"name": "zoom-discord-notifier",
+	"version": "1.0.0",
+	"description": "Zoom ミーティングへの入室を Discord に通知する Cloudflare Workers アプリ",
+	"type": "module",
+	"private": true,
+	"scripts": {
+		"dev": "wrangler dev",
+		"deploy": "wrangler deploy",
+		"lint": "biome check .",
+		"lint:fix": "biome check --write .",
+		"test": "vitest run"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/tomio2480/zoom-discord-notifier.git"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/tomio2480/zoom-discord-notifier/issues"
+	},
+	"homepage": "https://github.com/tomio2480/zoom-discord-notifier#readme",
+	"devDependencies": {
+		"@biomejs/biome": "^2.4.10",
+		"@cloudflare/workers-types": "^4.20260403.1",
+		"typescript": "^6.0.2",
+		"vitest": "^4.1.2",
+		"wrangler": "^4.80.0"
+	}
+}
