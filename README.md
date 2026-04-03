@@ -107,18 +107,18 @@ npx wrangler secret put ZOOM_SECRET_TOKEN
 npx wrangler secret put ZOOM_WEBHOOK_SECRET_TOKEN
 npx wrangler secret put DISCORD_WEBHOOK_URL
 npx wrangler secret put ZOOM_MEETING_ID
-npx wrangler secret put MEETING_DISPLAY_NAME
+npx wrangler secret put MEETING_DISPLAY_NAME  # 省略可
 ```
 
 各コマンド実行時に値の入力を求められる。
 
-| 変数名 | 内容 |
-|---|---|
-| `ZOOM_SECRET_TOKEN` | Zoom Webhook の検証トークン |
-| `ZOOM_WEBHOOK_SECRET_TOKEN` | Zoom 署名検証用シークレット |
-| `DISCORD_WEBHOOK_URL` | Discord Incoming Webhook の URL |
-| `ZOOM_MEETING_ID` | 通知対象のミーティング ID（招待 URL の `/j/` 以降の数字） |
-| `MEETING_DISPLAY_NAME` | 通知に表示する会議室名（省略時は Zoom の topic を使用） |
+| 変数名 | 必須 | 内容 |
+|---|---|---|
+| `ZOOM_SECRET_TOKEN` | はい | Zoom Webhook の検証トークン |
+| `ZOOM_WEBHOOK_SECRET_TOKEN` | はい | Zoom 署名検証用シークレット |
+| `DISCORD_WEBHOOK_URL` | はい | Discord Incoming Webhook の URL |
+| `ZOOM_MEETING_ID` | はい | 通知対象のミーティング ID（招待 URL の `/j/` 以降の数字） |
+| `MEETING_DISPLAY_NAME` | いいえ | 通知に表示する会議室名（省略時は Zoom の topic を使用） |
 
 ローカル開発では `.dev.vars.example` をコピーして `.dev.vars` を作成する。
 
