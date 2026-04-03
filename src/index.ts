@@ -1,6 +1,5 @@
 import { parseParticipantJoined } from "./participant-joined";
 import { verifySignature } from "./signature-verification";
-import type { ZoomWebhookPayload } from "./types";
 import { handleUrlValidation } from "./url-validation";
 
 export default {
@@ -33,7 +32,7 @@ export default {
 		}
 
 		if (body.event === "meeting.participant_joined") {
-			const data = parseParticipantJoined(body as ZoomWebhookPayload);
+			const data = parseParticipantJoined(body);
 			if (!data) {
 				return new Response("Bad Request", { status: 400 });
 			}
