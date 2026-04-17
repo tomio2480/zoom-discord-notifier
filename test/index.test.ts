@@ -214,8 +214,8 @@ describe("Worker", () => {
 		const response = await worker.fetch(request, env, ctx);
 		expect(response.status).toBe(200);
 
-		// KV のカウントがリセットされていることを検証
-		expect(await env.PARTICIPANT_STORE.get("count:123456789")).toBeNull();
+		// KV の参加者セットがリセットされていることを検証
+		expect(await env.PARTICIPANT_STORE.get("participants:123456789")).toBeNull();
 
 		const mockFetch = vi.mocked(fetch);
 		const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];

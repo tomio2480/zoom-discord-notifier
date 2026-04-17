@@ -1,6 +1,12 @@
-import type { ParticipantLeftData } from "./types";
+import { deriveParticipantId } from "./participant-id";
 
-export function parseParticipantLeft(payload: unknown): ParticipantLeftData | null {
+export interface ParsedLeftEvent {
+	meetingName: string;
+	leaveTime: string;
+	participantId: string;
+}
+
+export function parseParticipantLeft(payload: unknown): ParsedLeftEvent | null {
 	if (typeof payload !== "object" || payload === null) return null;
 
 	const p = payload as {
@@ -8,7 +14,12 @@ export function parseParticipantLeft(payload: unknown): ParticipantLeftData | nu
 		payload?: {
 			object?: {
 				topic?: unknown;
-				participant?: { leave_time?: unknown };
+				participant?: {
+					participant_user_id?: unknown;
+					user_id?: unknown;
+					user_name?: unknown;
+					leave_time?: unknown;
+				};
 			};
 		};
 	};
@@ -16,11 +27,15 @@ export function parseParticipantLeft(payload: unknown): ParticipantLeftData | nu
 	if (p.event !== "meeting.participant_left") return null;
 
 	const meetingName = p.payload?.object?.topic;
-	const leaveTime = p.payload?.object?.participant?.leave_time;
+	const participant = p.payload?.object?.participant;
+	const leaveTime = participant?.leave_time;
 
-	if (typeof meetingName !== "string" || typeof leaveTime !== "string") {
+	if (typeof meetingName !== "string" || typeof leaveTime !== "string" || !participant) {
 		return null;
 	}
 
-	return { meetingName, leaveTime };
+	const participantId = deriveParticipantId(participant);
+	if (!participantId) return null;
+
+	return { meetingName, leaveTime, participantId };
 }

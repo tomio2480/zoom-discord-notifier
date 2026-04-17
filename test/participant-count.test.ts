@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { decrementCount, getCount, incrementCount, resetCount } from "../src/participant-count";
+import {
+	addParticipant,
+	getCount,
+	removeParticipant,
+	resetParticipants,
+} from "../src/participant-count";
 
 function createMockKV(): KVNamespace {
 	const store = new Map<string, string>();
@@ -15,38 +20,46 @@ function createMockKV(): KVNamespace {
 }
 
 describe("participant-count", () => {
-	it("incrementCount はカウントを 1 増やして返す", async () => {
+	it("addParticipant は参加者を追加してカウントを返す", async () => {
 		const kv = createMockKV();
-		const count = await incrementCount(kv, "meeting-123");
+		const count = await addParticipant(kv, "meeting-123", "user-a");
 		expect(count).toBe(1);
 	});
 
-	it("incrementCount は連続呼び出しでカウントを増やす", async () => {
+	it("addParticipant は異なる参加者を追加するとカウントが増える", async () => {
 		const kv = createMockKV();
-		await incrementCount(kv, "meeting-123");
-		await incrementCount(kv, "meeting-123");
-		const count = await incrementCount(kv, "meeting-123");
+		await addParticipant(kv, "meeting-123", "user-a");
+		await addParticipant(kv, "meeting-123", "user-b");
+		const count = await addParticipant(kv, "meeting-123", "user-c");
 		expect(count).toBe(3);
 	});
 
-	it("decrementCount はカウントを 1 減らして返す", async () => {
+	it("addParticipant は同じ参加者を重複追加してもカウントが増えない（再接続対策）", async () => {
 		const kv = createMockKV();
-		await incrementCount(kv, "meeting-123");
-		await incrementCount(kv, "meeting-123");
-		const count = await decrementCount(kv, "meeting-123");
+		await addParticipant(kv, "meeting-123", "user-a");
+		await addParticipant(kv, "meeting-123", "user-b");
+		const count = await addParticipant(kv, "meeting-123", "user-a");
+		expect(count).toBe(2);
+	});
+
+	it("removeParticipant は参加者を削除してカウントを返す", async () => {
+		const kv = createMockKV();
+		await addParticipant(kv, "meeting-123", "user-a");
+		await addParticipant(kv, "meeting-123", "user-b");
+		const count = await removeParticipant(kv, "meeting-123", "user-a");
 		expect(count).toBe(1);
 	});
 
-	it("decrementCount は 0 未満にならない", async () => {
+	it("removeParticipant は存在しない参加者を削除しても 0 未満にならない", async () => {
 		const kv = createMockKV();
-		const count = await decrementCount(kv, "meeting-123");
+		const count = await removeParticipant(kv, "meeting-123", "user-a");
 		expect(count).toBe(0);
 	});
 
 	it("getCount は現在のカウントを返す", async () => {
 		const kv = createMockKV();
-		await incrementCount(kv, "meeting-123");
-		await incrementCount(kv, "meeting-123");
+		await addParticipant(kv, "meeting-123", "user-a");
+		await addParticipant(kv, "meeting-123", "user-b");
 		const count = await getCount(kv, "meeting-123");
 		expect(count).toBe(2);
 	});
@@ -57,11 +70,11 @@ describe("participant-count", () => {
 		expect(count).toBe(0);
 	});
 
-	it("resetCount はカウントを 0 にリセットする", async () => {
+	it("resetParticipants はカウントを 0 にリセットする", async () => {
 		const kv = createMockKV();
-		await incrementCount(kv, "meeting-123");
-		await incrementCount(kv, "meeting-123");
-		await resetCount(kv, "meeting-123");
+		await addParticipant(kv, "meeting-123", "user-a");
+		await addParticipant(kv, "meeting-123", "user-b");
+		await resetParticipants(kv, "meeting-123");
 		const count = await getCount(kv, "meeting-123");
 		expect(count).toBe(0);
 	});

@@ -4,7 +4,7 @@ import {
 	sendLeftNotification,
 } from "./discord-notification";
 import { parseMeetingEnded } from "./meeting-ended";
-import { decrementCount, incrementCount, resetCount } from "./participant-count";
+import { addParticipant, removeParticipant, resetParticipants } from "./participant-count";
 import { parseParticipantJoined } from "./participant-joined";
 import { parseParticipantLeft } from "./participant-left";
 import { verifySignature } from "./signature-verification";
@@ -52,7 +52,11 @@ export default {
 			if (!parsed) {
 				return new Response("Bad Request", { status: 400 });
 			}
-			const participantCount = await incrementCount(env.PARTICIPANT_STORE, env.ZOOM_MEETING_ID);
+			const participantCount = await addParticipant(
+				env.PARTICIPANT_STORE,
+				env.ZOOM_MEETING_ID,
+				parsed.participantId,
+			);
 			const data = {
 				meetingName: env.MEETING_DISPLAY_NAME || parsed.meetingName,
 				joinTime: parsed.joinTime,
@@ -70,7 +74,11 @@ export default {
 			if (!parsed) {
 				return new Response("Bad Request", { status: 400 });
 			}
-			const participantCount = await decrementCount(env.PARTICIPANT_STORE, env.ZOOM_MEETING_ID);
+			const participantCount = await removeParticipant(
+				env.PARTICIPANT_STORE,
+				env.ZOOM_MEETING_ID,
+				parsed.participantId,
+			);
 			const data = {
 				meetingName: env.MEETING_DISPLAY_NAME || parsed.meetingName,
 				leaveTime: parsed.leaveTime,
@@ -88,7 +96,7 @@ export default {
 			if (!parsed) {
 				return new Response("Bad Request", { status: 400 });
 			}
-			await resetCount(env.PARTICIPANT_STORE, env.ZOOM_MEETING_ID);
+			await resetParticipants(env.PARTICIPANT_STORE, env.ZOOM_MEETING_ID);
 			const data = {
 				meetingName: env.MEETING_DISPLAY_NAME || parsed.meetingName,
 				endTime: parsed.endTime,
