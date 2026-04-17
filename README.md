@@ -140,7 +140,8 @@ cp .dev.vars.example .dev.vars
 
 ```bash
 npm ci
-npm run dev      # ローカル開発サーバー起動
-npm run lint     # lint 実行
-npm run test     # テスト実行
+npm run dev       # ローカル開発サーバー起動
+npm run lint      # lint 実行
+npm run typecheck # 型チェック実行
+npm run test      # テスト実行
 ```
