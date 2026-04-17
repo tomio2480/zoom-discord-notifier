@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { createHmac } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import worker from "../src/index";

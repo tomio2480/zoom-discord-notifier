@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { createHmac } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { verifySignature } from "../src/signature-verification";

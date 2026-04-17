@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 const TIMESTAMP_TOLERANCE_SECONDS = 300;
