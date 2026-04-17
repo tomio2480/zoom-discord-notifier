@@ -21,6 +21,9 @@ export async function addParticipant(
 	participantId: string,
 ): Promise<number> {
 	const participants = await getParticipants(kv, meetingId);
+	if (participants.has(participantId)) {
+		return participants.size;
+	}
 	participants.add(participantId);
 	await kv.put(`participants:${meetingId}`, JSON.stringify([...participants]), {
 		expirationTtl: PARTICIPANTS_TTL_SECONDS,
@@ -34,10 +37,16 @@ export async function removeParticipant(
 	participantId: string,
 ): Promise<number> {
 	const participants = await getParticipants(kv, meetingId);
-	participants.delete(participantId);
-	await kv.put(`participants:${meetingId}`, JSON.stringify([...participants]), {
-		expirationTtl: PARTICIPANTS_TTL_SECONDS,
-	});
+	if (!participants.delete(participantId)) {
+		return participants.size;
+	}
+	if (participants.size === 0) {
+		await kv.delete(`participants:${meetingId}`);
+	} else {
+		await kv.put(`participants:${meetingId}`, JSON.stringify([...participants]), {
+			expirationTtl: PARTICIPANTS_TTL_SECONDS,
+		});
+	}
 	return participants.size;
 }
 
