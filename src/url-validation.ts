@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { createHmac } from "node:crypto";
 
 export interface UrlValidationResult {
