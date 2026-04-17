@@ -63,7 +63,7 @@ describe("parseParticipantJoined", () => {
 		expect(result?.participantId).toBe("16778240");
 	});
 
-	it("user_id が \"0\" の場合は user_name にフォールバックする", () => {
+	it('user_id が "0" の場合は user_name にフォールバックする', () => {
 		const payload = {
 			event: "meeting.participant_joined",
 			payload: {
