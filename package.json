@@ -9,8 +9,8 @@
 		"deploy": "wrangler deploy",
 		"lint": "biome check .",
 		"lint:fix": "biome check --write .",
-		"test": "vitest run",
-		"typecheck": "tsc --noEmit"
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run"
 	},
 	"repository": {
 		"type": "git",
