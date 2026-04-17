@@ -7,8 +7,9 @@ export function deriveParticipantId(participant: {
 		return participant.participant_user_id;
 	}
 	const userId = participant.user_id;
-	if (userId !== undefined && userId !== null && String(userId) !== "0") {
-		return String(userId);
+	if ((typeof userId === "string" || typeof userId === "number") && String(userId) !== "0") {
+		const userIdStr = String(userId);
+		if (userIdStr) return userIdStr;
 	}
 	if (typeof participant.user_name === "string" && participant.user_name) {
 		return participant.user_name;
