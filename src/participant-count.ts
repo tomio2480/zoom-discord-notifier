@@ -2,11 +2,7 @@
 // 数値カウンタではなく参加者 ID のセットで管理することで、再接続時の
 // 重複カウント（join が stale な値を読んで increment してしまう問題）を防ぐ。
 // expirationTtl により meeting.ended が届かなかった場合でも古いデータが残らない。
-//
-// TODO: 異なる参加者 ID の同時 join / leave では、双方が stale な読み取りを元に
-// 書き戻すことで一方の更新が失われる lost update が依然として発生しうる。
-// 抜本対策としては Durable Objects によるシリアライズ、もしくは
-// compare-and-set 的なリトライの導入を検討する（無料プランの制約あり）。
+// 異なる参加者の同時 join/leave による lost update は依然として残存する（issue #32 参照）。
 
 const PARTICIPANTS_TTL_SECONDS = 86400; // 24 時間
 
