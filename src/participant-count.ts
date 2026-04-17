@@ -10,7 +10,7 @@ async function getParticipants(kv: KVNamespace, meetingId: string): Promise<Set<
 	if (value === null) return new Set();
 	try {
 		const parsed = JSON.parse(value);
-		if (Array.isArray(parsed)) return new Set(parsed as string[]);
+		if (Array.isArray(parsed)) return new Set(parsed.filter((item): item is string => typeof item === "string"));
 	} catch {}
 	return new Set();
 }
