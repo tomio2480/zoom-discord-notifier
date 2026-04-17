@@ -11,7 +11,7 @@ import { verifySignature } from "./signature-verification";
 import { handleUrlValidation } from "./url-validation";
 
 export default {
-	async fetch(request: Request, env: Env): Promise<Response> {
+	async fetch(request: Request, env: Env, _ctx: ExecutionContext): Promise<Response> {
 		if (request.method !== "POST") {
 			return new Response("Method Not Allowed", { status: 405 });
 		}
