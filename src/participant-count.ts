@@ -1,27 +1,66 @@
-// NOTE: KV は最終整合性のため、並行リクエストでカウントが不正確になる可能性がある。
-// Durable Objects を使えば原子的な操作が可能だが、無料プランに含まれないため
-// KV を採用している。通知用途ではカウントの多少のずれは許容範囲とする。
-export async function incrementCount(kv: KVNamespace, meetingId: string): Promise<number> {
-	const current = await getCount(kv, meetingId);
-	const next = current + 1;
-	await kv.put(`count:${meetingId}`, String(next));
-	return next;
+// NOTE: KV は最終整合性のため並行リクエストでデータが失われる可能性がある。
+// 数値カウンタではなく参加者 ID のセットで管理することで、再接続時の
+// 重複カウント（join が stale な値を読んで increment してしまう問題）を防ぐ。
+// expirationTtl により meeting.ended が届かなかった場合でも古いデータが残らない。
+// 異なる参加者の同時 join/leave による lost update は依然として残存する（issue #32 参照）。
+
+const PARTICIPANTS_TTL_SECONDS = 86400; // 24 時間
+
+async function getParticipants(kv: KVNamespace, meetingId: string): Promise<Set<string>> {
+	const value = await kv.get(`participants:${meetingId}`);
+	if (value === null) return new Set();
+	try {
+		const parsed = JSON.parse(value);
+		if (Array.isArray(parsed)) {
+			return new Set(parsed.filter((item): item is string => typeof item === "string"));
+		}
+		console.warn(`participants:${meetingId} is not an array`, { type: typeof parsed });
+	} catch (err) {
+		console.warn(`failed to parse participants:${meetingId}`, err);
+	}
+	return new Set();
 }
 
-export async function decrementCount(kv: KVNamespace, meetingId: string): Promise<number> {
-	const current = await getCount(kv, meetingId);
-	const next = Math.max(0, current - 1);
-	await kv.put(`count:${meetingId}`, String(next));
-	return next;
+export async function addParticipant(
+	kv: KVNamespace,
+	meetingId: string,
+	participantId: string,
+): Promise<number> {
+	const participants = await getParticipants(kv, meetingId);
+	participants.add(participantId);
+	// NOTE: 既存参加者でも put を実行して TTL をリフレッシュする。
+	// 再接続が続くだけで新規参加者が来ない会議でも TTL 失効を防ぐため。
+	await kv.put(`participants:${meetingId}`, JSON.stringify([...participants]), {
+		expirationTtl: PARTICIPANTS_TTL_SECONDS,
+	});
+	return participants.size;
+}
+
+export async function removeParticipant(
+	kv: KVNamespace,
+	meetingId: string,
+	participantId: string,
+): Promise<number> {
+	const participants = await getParticipants(kv, meetingId);
+	// 不在参加者への leave（stale event や meeting.ended 後の event）は書き戻さない
+	if (!participants.delete(participantId)) {
+		return participants.size;
+	}
+	if (participants.size === 0) {
+		await kv.delete(`participants:${meetingId}`);
+	} else {
+		await kv.put(`participants:${meetingId}`, JSON.stringify([...participants]), {
+			expirationTtl: PARTICIPANTS_TTL_SECONDS,
+		});
+	}
+	return participants.size;
+}
+
+export async function resetParticipants(kv: KVNamespace, meetingId: string): Promise<void> {
+	await kv.delete(`participants:${meetingId}`);
 }
 
 export async function getCount(kv: KVNamespace, meetingId: string): Promise<number> {
-	const value = await kv.get(`count:${meetingId}`);
-	if (value === null) return 0;
-	const parsed = Number.parseInt(value, 10);
-	return Number.isNaN(parsed) ? 0 : parsed;
-}
-
-export async function resetCount(kv: KVNamespace, meetingId: string): Promise<void> {
-	await kv.delete(`count:${meetingId}`);
+	const participants = await getParticipants(kv, meetingId);
+	return participants.size;
 }

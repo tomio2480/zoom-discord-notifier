@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { parseParticipantLeft } from "../src/participant-left";
 
 describe("parseParticipantLeft", () => {
-	it("ペイロードからミーティング名と退室時刻を取り出す", () => {
+	it("ペイロードからミーティング名・退室時刻・参加者 ID を取り出す", () => {
 		const payload = {
 			event: "meeting.participant_left",
 			payload: {
@@ -20,6 +20,7 @@ describe("parseParticipantLeft", () => {
 		expect(result).toEqual({
 			meetingName: "テストミーティング",
 			leaveTime: "2026-04-03T11:00:00Z",
+			participantId: "田中太郎",
 		});
 	});
 
