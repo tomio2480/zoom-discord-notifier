@@ -63,6 +63,25 @@ describe("parseParticipantJoined", () => {
 		expect(result?.participantId).toBe("16778240");
 	});
 
+	it("user_id が \"0\" の場合は user_name にフォールバックする", () => {
+		const payload = {
+			event: "meeting.participant_joined",
+			payload: {
+				object: {
+					topic: "テスト",
+					participant: {
+						user_id: "0",
+						user_name: "田中太郎",
+						join_time: "2026-04-03T10:00:00Z",
+					},
+				},
+			},
+		};
+
+		const result = parseParticipantJoined(payload);
+		expect(result?.participantId).toBe("田中太郎");
+	});
+
 	it("イベントが meeting.participant_joined でない場合は null を返す", () => {
 		const payload = {
 			event: "meeting.started",

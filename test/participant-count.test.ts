@@ -56,6 +56,14 @@ describe("participant-count", () => {
 		expect(count).toBe(0);
 	});
 
+	it("removeParticipant は同じ参加者を重複削除しても 0 未満にならない（冪等性）", async () => {
+		const kv = createMockKV();
+		await addParticipant(kv, "meeting-123", "user-a");
+		await removeParticipant(kv, "meeting-123", "user-a");
+		const count = await removeParticipant(kv, "meeting-123", "user-a");
+		expect(count).toBe(0);
+	});
+
 	it("getCount は現在のカウントを返す", async () => {
 		const kv = createMockKV();
 		await addParticipant(kv, "meeting-123", "user-a");
