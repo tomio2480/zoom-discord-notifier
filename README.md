@@ -74,7 +74,7 @@ npm run deploy
 | `CLOUDFLARE_API_TOKEN` | 手順 2 で発行した API トークン |
 | `CLOUDFLARE_ACCOUNT_ID` | 手順 3 で確認したアカウント ID |
 
-`main` ブランチへの push 時に自動デプロイされる。
+`main` ブランチへの push 時に自動デプロイされる。`main` への pull request 時には lint・型チェック・テストのみ実行される（デプロイなし）。
 
 ### 2. Zoom Marketplace アプリの作成
 
@@ -142,6 +142,7 @@ cp .dev.vars.example .dev.vars
 npm ci
 npm run dev       # ローカル開発サーバー起動
 npm run lint      # lint 実行
+npm run lint:fix  # lint の自動修正
 npm run typecheck # 型チェック実行
 npm run test      # テスト実行
 ```
