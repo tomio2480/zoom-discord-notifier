@@ -24,7 +24,7 @@
 	},
 	"homepage": "https://github.com/tomio2480/zoom-discord-notifier#readme",
 	"devDependencies": {
-		"@biomejs/biome": "^2.4.12",
+		"@biomejs/biome": "^2.4.13",
 		"@cloudflare/workers-types": "^4.20260418.1",
 		"@types/node": "^25.6.0",
 		"typescript": "^6.0.3",
